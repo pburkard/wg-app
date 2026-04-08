@@ -5,7 +5,7 @@ export type AuthStackParamList = {
 
 export type MainTabParamList = {
   Dashboard: undefined;
-  Cleaning: undefined;
+  Tasks: undefined;
   Finances: undefined;
   Settings: undefined;
 };

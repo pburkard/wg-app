@@ -62,8 +62,8 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           to: profile.push_token,
           sound: "default",
-          title: "It's your turn!",
-          body: `Time to clean: ${task.name}`,
+          title: `It's your turn! ${task.name}`,
+          body: `It's your turn to clean: ${task.name}`,
         }),
       });
     }

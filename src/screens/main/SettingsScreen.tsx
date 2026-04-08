@@ -15,7 +15,9 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { confirmAction } from '../../lib/confirm';
 import { supabase } from '../../lib/supabase';
+import { notifyApartmentMembers } from '../../lib/notifications';
 import { useAuth } from '../../contexts/AuthContext';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { Apartment, Profile } from '../../types/database';
 
 const MAX_WG_NAME_LENGTH = 20;
@@ -27,6 +29,7 @@ export default function SettingsScreen() {
   const [editingName, setEditingName] = useState(false);
   const [wgName, setWgName] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   // Change username
   const [editingUsername, setEditingUsername] = useState(false);
@@ -211,6 +214,16 @@ export default function SettingsScreen() {
   // --- Share Invite Code ---
   async function handleShareInvite() {
     if (!apartment) return;
+    if (Platform.OS === 'web') {
+      try {
+        await navigator.clipboard.writeText(apartment.invite_code);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch (_) {
+        Alert.alert('Error', 'Could not copy to clipboard.');
+      }
+      return;
+    }
     try {
       await Share.share({
         message: `Join our WG "${apartment.name}" on WG Manager! Use invite code: ${apartment.invite_code}`,
@@ -228,6 +241,12 @@ export default function SettingsScreen() {
         await supabase.from('profiles').update({ role: 'member' }).eq('id', user!.id);
         await refreshProfile();
         fetchData();
+        notifyApartmentMembers(
+          profile!.apartment_id!,
+          user!.id,
+          'Admin Changed',
+          `${member.display_name} is now the admin of ${apartment!.name}`,
+        ).catch(() => {});
       },
       'Transfer',
     );
@@ -255,6 +274,12 @@ export default function SettingsScreen() {
         }
 
         await supabase.from('profiles').update({ apartment_id: null, role: null }).eq('id', member.id);
+        notifyApartmentMembers(
+          profile!.apartment_id!,
+          member.id,
+          'Member Removed',
+          `${member.display_name} was removed from ${apartment!.name}`,
+        ).catch(() => {});
         fetchData();
       },
       'Remove',
@@ -290,6 +315,12 @@ export default function SettingsScreen() {
           }
         }
 
+        notifyApartmentMembers(
+          profile!.apartment_id!,
+          user!.id,
+          'Member Left',
+          `${profile!.display_name} left ${apartment!.name}`,
+        ).catch(() => {});
         await supabase.from('profiles').update({ apartment_id: null, role: null }).eq('id', user!.id);
         await refreshProfile();
       },
@@ -345,7 +376,7 @@ export default function SettingsScreen() {
         <View style={styles.row}>
           <Text style={styles.label}>Username</Text>
           {editingUsername ? (
-            <View style={styles.editColumn}>
+            <View style={styles.editInlineRow}>
               <TextInput
                 style={styles.editInput}
                 value={newUsername}
@@ -356,19 +387,20 @@ export default function SettingsScreen() {
                 maxLength={30}
                 autoFocus
               />
-              <View style={styles.editActions}>
-                <TouchableOpacity onPress={handleChangeUsername}>
-                  <Text style={styles.saveText}>Save</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => { setEditingUsername(false); setNewUsername(''); }}>
-                  <Text style={styles.cancelText}>Cancel</Text>
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity style={styles.saveButton} onPress={handleChangeUsername}>
+                <Text style={styles.saveButtonText}>Save</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.cancelButton} onPress={() => { setEditingUsername(false); setNewUsername(''); }}>
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
             </View>
           ) : (
-            <TouchableOpacity onPress={() => { setNewUsername(profile?.display_name ?? ''); setEditingUsername(true); }}>
-              <Text style={styles.editableValue}>{profile?.display_name ?? '-'} ✎</Text>
-            </TouchableOpacity>
+            <View style={styles.valueRow}>
+              <Text style={styles.value}>{profile?.display_name ?? '-'}</Text>
+              <TouchableOpacity style={styles.editPillButton} onPress={() => { setNewUsername(profile?.display_name ?? ''); setEditingUsername(true); }}>
+                <Text style={styles.editPillText}>Edit</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
 
@@ -376,7 +408,7 @@ export default function SettingsScreen() {
         <View style={styles.row}>
           <Text style={styles.label}>Email</Text>
           {editingEmail ? (
-            <View style={styles.editColumn}>
+            <View style={styles.editInlineRow}>
               <TextInput
                 style={styles.editInput}
                 value={newEmail}
@@ -387,27 +419,28 @@ export default function SettingsScreen() {
                 autoCapitalize="none"
                 autoFocus
               />
-              <View style={styles.editActions}>
-                <TouchableOpacity onPress={handleChangeEmail}>
-                  <Text style={styles.saveText}>Save</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => { setEditingEmail(false); setNewEmail(''); }}>
-                  <Text style={styles.cancelText}>Cancel</Text>
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity style={styles.saveButton} onPress={handleChangeEmail}>
+                <Text style={styles.saveButtonText}>Save</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.cancelButton} onPress={() => { setEditingEmail(false); setNewEmail(''); }}>
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
             </View>
           ) : (
-            <TouchableOpacity onPress={() => setEditingEmail(true)}>
-              <Text style={styles.editableValue}>{user?.email ?? '-'} ✎</Text>
-            </TouchableOpacity>
+            <View style={styles.valueRow}>
+              <Text style={styles.value}>{user?.email ?? '-'}</Text>
+              <TouchableOpacity style={styles.editPillButton} onPress={() => setEditingEmail(true)}>
+                <Text style={styles.editPillText}>Edit</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
 
         {/* Password */}
-        <View style={styles.row}>
+        <View style={editingPassword ? styles.rowColumn : styles.row}>
           <Text style={styles.label}>Password</Text>
           {editingPassword ? (
-            <View style={styles.editColumn}>
+            <View style={styles.editColumnFields}>
               <TextInput
                 style={styles.editInput}
                 value={newPassword}
@@ -415,6 +448,7 @@ export default function SettingsScreen() {
                 placeholder="New password"
                 placeholderTextColor="#bbb"
                 secureTextEntry
+                autoFocus
               />
               <TextInput
                 style={[styles.editInput, { marginTop: 6 }]}
@@ -424,19 +458,22 @@ export default function SettingsScreen() {
                 placeholderTextColor="#bbb"
                 secureTextEntry
               />
-              <View style={styles.editActions}>
-                <TouchableOpacity onPress={handleChangePassword}>
-                  <Text style={styles.saveText}>Save</Text>
+              <View style={styles.editButtonRow}>
+                <TouchableOpacity style={styles.saveButton} onPress={handleChangePassword}>
+                  <Text style={styles.saveButtonText}>Save</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => { setEditingPassword(false); setNewPassword(''); setConfirmPassword(''); }}>
+                <TouchableOpacity style={styles.cancelButton} onPress={() => { setEditingPassword(false); setNewPassword(''); setConfirmPassword(''); }}>
                   <Text style={styles.cancelText}>Cancel</Text>
                 </TouchableOpacity>
               </View>
             </View>
           ) : (
-            <TouchableOpacity onPress={() => setEditingPassword(true)}>
-              <Text style={styles.editableValue}>••••••••  ✎</Text>
-            </TouchableOpacity>
+            <View style={styles.valueRow}>
+              <Text style={styles.value}>••••••••</Text>
+              <TouchableOpacity style={styles.editPillButton} onPress={() => setEditingPassword(true)}>
+                <Text style={styles.editPillText}>Edit</Text>
+              </TouchableOpacity>
+            </View>
           )}
         </View>
       </View>
@@ -450,7 +487,7 @@ export default function SettingsScreen() {
           <View style={styles.row}>
             <Text style={styles.label}>Name</Text>
             {editingName ? (
-              <View style={styles.editRow}>
+              <View style={styles.editInlineRow}>
                 <TextInput
                   style={styles.editInput}
                   value={wgName}
@@ -458,17 +495,20 @@ export default function SettingsScreen() {
                   maxLength={MAX_WG_NAME_LENGTH}
                   autoFocus
                 />
-                <TouchableOpacity onPress={handleSaveName}>
-                  <Text style={styles.saveText}>Save</Text>
+                <TouchableOpacity style={styles.saveButton} onPress={handleSaveName}>
+                  <Text style={styles.saveButtonText}>Save</Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => { setEditingName(false); setWgName(apartment.name); }}>
+                <TouchableOpacity style={styles.cancelButton} onPress={() => { setEditingName(false); setWgName(apartment.name); }}>
                   <Text style={styles.cancelText}>Cancel</Text>
                 </TouchableOpacity>
               </View>
             ) : (
-              <TouchableOpacity onPress={() => setEditingName(true)}>
-                <Text style={styles.editableValue}>{apartment.name} ✎</Text>
-              </TouchableOpacity>
+              <View style={styles.valueRow}>
+                <Text style={styles.value}>{apartment.name}</Text>
+                <TouchableOpacity style={styles.editPillButton} onPress={() => setEditingName(true)}>
+                  <Text style={styles.editPillText}>Edit</Text>
+                </TouchableOpacity>
+              </View>
             )}
           </View>
 
@@ -483,8 +523,12 @@ export default function SettingsScreen() {
             <Text style={styles.label}>Invite Code</Text>
             <View style={styles.inviteRow}>
               <Text style={styles.inviteCode}>{apartment.invite_code}</Text>
-              <TouchableOpacity onPress={handleShareInvite} style={styles.shareButton}>
-                <Text style={styles.shareText}>Share</Text>
+              <TouchableOpacity onPress={handleShareInvite} style={Platform.OS === 'web' ? styles.iconButton : styles.shareButton}>
+                {Platform.OS === 'web' ? (
+                  <FontAwesome5 name={copied ? 'check-circle' : 'copy'} size={22} color={copied ? '#16a34a' : '#4f46e5'} />
+                ) : (
+                  <Text style={styles.shareText}>Share</Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -522,11 +566,11 @@ export default function SettingsScreen() {
                 {isAdmin && !isMe && (
                   <View style={styles.memberActions}>
                     {!memberIsAdmin && (
-                      <TouchableOpacity onPress={() => handleTransferAdmin(m)}>
+                      <TouchableOpacity style={styles.actionButton} onPress={() => handleTransferAdmin(m)}>
                         <Text style={styles.actionText}>Make Admin</Text>
                       </TouchableOpacity>
                     )}
-                    <TouchableOpacity onPress={() => handleRemoveMember(m)}>
+                    <TouchableOpacity style={styles.removeButton} onPress={() => handleRemoveMember(m)}>
                       <Text style={styles.removeText}>Remove</Text>
                     </TouchableOpacity>
                   </View>
@@ -548,7 +592,9 @@ export default function SettingsScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={{ height: 40 }} />
+      <View style={styles.watermark}>
+        <Text style={styles.watermarkText}>made with ❤️ in 🇨🇭 by Pascal Burkard</Text>
+      </View>
     </ScrollView>
   );
 }
@@ -558,7 +604,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     padding: 24,
-    paddingTop: 60,
+    paddingTop: Platform.OS === 'web' ? 60 : 100,
   },
   title: {
     fontSize: 28,
@@ -592,24 +638,41 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
   },
-  editableValue: {
-    fontSize: 16,
-    color: '#4f46e5',
+  valueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
-  editRow: {
+  editPillButton: {
+    backgroundColor: '#4f46e5',
+    borderRadius: 6,
+    paddingVertical: 9,
+    paddingHorizontal: 14,
+  },
+  editPillText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  editInlineRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flexShrink: 1,
   },
-  editColumn: {
-    flex: 1,
-    marginLeft: 12,
+  rowColumn: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
-  editActions: {
+  editColumnFields: {
+    marginTop: 10,
+    alignSelf: 'flex-end',
+  },
+  editButtonRow: {
     flexDirection: 'row',
-    gap: 12,
-    marginTop: 6,
-    justifyContent: 'flex-end',
+    gap: 8,
+    marginTop: 10,
   },
   editInput: {
     borderWidth: 1,
@@ -618,18 +681,31 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 10,
     fontSize: 15,
-    minWidth: 120,
     color: '#1a1a1a',
     backgroundColor: '#f9f9f9',
+    maxWidth: 220,
   },
-  saveText: {
-    fontSize: 14,
+  saveButton: {
+    backgroundColor: '#4f46e5',
+    borderRadius: 6,
+    paddingVertical: 9,
+    paddingHorizontal: 14,
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontSize: 13,
     fontWeight: '600',
-    color: '#4f46e5',
+  },
+  cancelButton: {
+    backgroundColor: '#f0f0f0',
+    borderRadius: 6,
+    paddingVertical: 9,
+    paddingHorizontal: 14,
   },
   cancelText: {
-    fontSize: 14,
-    color: '#999',
+    color: '#666',
+    fontSize: 13,
+    fontWeight: '600',
   },
   // Avatar
   avatarRow: {
@@ -694,9 +770,12 @@ const styles = StyleSheet.create({
   },
   shareButton: {
     backgroundColor: '#4f46e5',
-    paddingHorizontal: 12,
-    paddingVertical: 5,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
     borderRadius: 6,
+  },
+  iconButton: {
+    padding: 4,
   },
   shareText: {
     color: '#fff',
@@ -744,15 +823,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
   },
+  actionButton: {
+    backgroundColor: '#4f46e5',
+    borderRadius: 6,
+    paddingVertical: 9,
+    paddingHorizontal: 14,
+  },
   actionText: {
-    fontSize: 14,
-    color: '#4f46e5',
-    fontWeight: '500',
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  removeButton: {
+    backgroundColor: '#ef4444',
+    borderRadius: 6,
+    paddingVertical: 9,
+    paddingHorizontal: 14,
   },
   removeText: {
-    fontSize: 14,
-    color: '#ef4444',
-    fontWeight: '500',
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
   },
   // Danger zone
   textButton: {
@@ -768,5 +859,13 @@ const styles = StyleSheet.create({
   mutedDangerText: {
     color: '#999',
     fontSize: 16,
+  },
+  watermark: {
+    alignItems: 'center',
+    paddingVertical: 32,
+  },
+  watermarkText: {
+    fontSize: 14,
+    color: '#aaa4a4',
   },
 });

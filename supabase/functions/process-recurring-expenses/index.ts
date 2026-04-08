@@ -134,8 +134,8 @@ Deno.serve(async (_req) => {
         body: JSON.stringify({
           to: p.push_token,
           sound: "default",
-          title: "Recurring Expense",
-          body: `CHF ${Number(rec.amount).toFixed(2)} — ${rec.description}`,
+          title: `Recurring Expense: ${rec.description}`,
+          body: `${rec.description} for CHF ${Number(rec.amount).toFixed(2)}`,
         }),
       });
     }

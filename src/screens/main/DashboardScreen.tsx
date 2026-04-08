@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  Platform,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { supabase } from '../../lib/supabase';
@@ -298,7 +299,7 @@ export default function DashboardScreen() {
       <View style={styles.card}>
         <View style={styles.cleaningHeader}>
           <Text style={styles.cardLabel}>
-            {myTasksThisWeek.length > 0 ? 'Your cleaning duties this week' : 'Cleaning duties'}
+            {myTasksThisWeek.length > 0 ? 'Your tasks this week' : 'Tasks'}
           </Text>
           {totalCompletions > 0 && (
             <View style={styles.completedBadge}>
@@ -351,7 +352,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     padding: 24,
-    paddingTop: 60,
+    paddingTop: Platform.OS === 'web' ? 60 : 100,
   },
   title: {
     fontSize: 28,
@@ -472,7 +473,7 @@ const styles = StyleSheet.create({
   markDoneBtn: {
     backgroundColor: '#4f46e5',
     borderRadius: 6,
-    paddingVertical: 6,
+    paddingVertical: 9,
     paddingHorizontal: 14,
   },
   markDoneBtnText: {

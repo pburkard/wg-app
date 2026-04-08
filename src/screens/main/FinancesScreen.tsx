@@ -10,6 +10,7 @@ import {
   Modal,
   ScrollView,
   Switch,
+  Platform,
 } from 'react-native';
 import { supabase } from '../../lib/supabase';
 import { confirmAction } from '../../lib/confirm';
@@ -316,7 +317,7 @@ export default function FinancesScreen() {
       profile!.apartment_id!,
       user!.id,
       'New Expense',
-      `CHF ${parsedAmount.toFixed(2)} — ${description.trim()}`,
+      `${profile!.display_name} added ${description.trim()} for CHF ${parsedAmount.toFixed(2)}`,
     ).catch(() => {});
   }
 
@@ -1008,7 +1009,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     padding: 24,
-    paddingTop: 60,
+    paddingTop: Platform.OS === 'web' ? 60 : 100,
   },
   header: {
     flexDirection: 'row',
@@ -1030,11 +1031,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#4f46e5',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
   },
   recurringButton: {
     fontSize: 14,
     fontWeight: '500',
     color: '#999',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
   },
   sectionTitle: {
     fontSize: 14,
@@ -1124,6 +1129,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1a1a1a',
     marginLeft: 12,
+    marginRight: 15,
   },
   // Modal
   modalOverlay: {

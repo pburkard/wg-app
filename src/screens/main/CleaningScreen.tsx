@@ -476,8 +476,8 @@ export default function CleaningScreen() {
         </View>
         {isAdmin && (
           <View style={styles.manageActions}>
-            <TouchableOpacity onPress={() => openEditForm(item)}>
-              <Text style={styles.editText}>Edit</Text>
+            <TouchableOpacity style={styles.editButton} onPress={() => openEditForm(item)}>
+              <Text style={styles.editButtonText}>Edit</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -489,7 +489,7 @@ export default function CleaningScreen() {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Cleaning</Text>
+        <Text style={styles.title}>Tasks</Text>
         <View style={styles.headerButtons}>
           <TouchableOpacity onPress={() => setShowStats(true)}>
             <Text style={styles.headerButton}>Stats</Text>
@@ -802,7 +802,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     padding: 24,
-    paddingTop: 60,
+    paddingTop: Platform.OS === 'web' ? 60 : 100,
   },
   header: {
     flexDirection: 'row',
@@ -823,6 +823,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#4f46e5',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
   },
 
   // Progress
@@ -984,23 +986,21 @@ const styles = StyleSheet.create({
     color: '#ef4444',
   },
   helpButton: {
-    backgroundColor: '#fef2f2',
+    backgroundColor: '#ef4444',
     borderRadius: 6,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderWidth: 1,
-    borderColor: '#fecaca',
+    paddingVertical: 9,
+    paddingHorizontal: 14,
   },
   helpButtonText: {
-    color: '#ef4444',
-    fontSize: 12,
+    color: '#fff',
+    fontSize: 13,
     fontWeight: '600',
   },
   doneButton: {
     backgroundColor: '#4f46e5',
     borderRadius: 6,
-    paddingVertical: 5,
-    paddingHorizontal: 12,
+    paddingVertical: 9,
+    paddingHorizontal: 14,
   },
   doneButtonText: {
     color: '#fff',
@@ -1010,8 +1010,8 @@ const styles = StyleSheet.create({
   undoButton: {
     backgroundColor: '#f0f0f0',
     borderRadius: 6,
-    paddingVertical: 5,
-    paddingHorizontal: 12,
+    paddingVertical: 9,
+    paddingHorizontal: 14,
   },
   undoButtonText: {
     color: '#666',
@@ -1043,6 +1043,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#4f46e5',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
   },
   manageList: {
     flexGrow: 0,
@@ -1099,15 +1101,23 @@ const styles = StyleSheet.create({
     gap: 8,
     marginLeft: 12,
   },
-  editText: {
-    color: '#4f46e5',
-    fontSize: 14,
-    fontWeight: '500',
+  editButton: {
+    backgroundColor: '#4f46e5',
+    borderRadius: 6,
+    paddingVertical: 9,
+    paddingHorizontal: 14,
+  },
+  editButtonText: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: '600',
   },
   deleteText: {
     color: '#ef4444',
     fontSize: 14,
     fontWeight: '500',
+    paddingVertical: 8,
+    paddingHorizontal: 6,
   },
   fieldGroup: {
     marginBottom: 16,
@@ -1143,6 +1153,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#4f46e5',
+    paddingVertical: 8,
+    paddingHorizontal: 4,
   },
   deleteFormButton: {
     marginTop: 24,
@@ -1217,6 +1229,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     padding: 24,
     paddingBottom: 40,
+    flexShrink: 1,
     maxHeight: '90%',
   },
   statsHeader: {
@@ -1226,7 +1239,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   statsContent: {
-    flex: 1,
+    flexShrink: 1,
   },
   statsSection: {
     marginBottom: 24,
