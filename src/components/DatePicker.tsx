@@ -1,19 +1,17 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, Keyboard } from 'react-native';
 
 type Props = {
   value: Date;
   onChange: (date: Date) => void;
   label?: string;
+  onOpen?: () => void;   // called when picker opens — parent can close other pickers
+  isOpen?: boolean;      // controlled open state from parent
 };
 
-/**
- * Cross-platform date picker.
- * - iOS/Android: native DateTimePicker from @react-native-community/datetimepicker
- * - Web: HTML <input type="date">
- */
-export default function DatePicker({ value, onChange, label }: Props) {
-  const [showNative, setShowNative] = useState(false);
+export default function DatePicker({ value, onChange, label, onOpen, isOpen }: Props) {
+  const [localOpen, setLocalOpen] = useState(false);
+  const showNative = isOpen !== undefined ? isOpen : localOpen;
 
   const formatted = value.toLocaleDateString('en', {
     weekday: 'short',
@@ -53,19 +51,37 @@ export default function DatePicker({ value, onChange, label }: Props) {
   const RNDateTimePicker =
     require('@react-native-community/datetimepicker').default;
 
+  function handleOpen() {
+    Keyboard.dismiss();
+    if (isOpen !== undefined) {
+      onOpen?.();
+    } else {
+      setLocalOpen(true);
+      onOpen?.();
+    }
+  }
+
+  function handleClose() {
+    if (isOpen !== undefined) {
+      // controlled — parent manages close via onOpen resetting state
+    } else {
+      setLocalOpen(false);
+    }
+  }
+
   return (
     <View style={styles.container}>
       {label && <Text style={styles.label}>{label}</Text>}
-      <TouchableOpacity style={styles.button} onPress={() => setShowNative(true)}>
+      <TouchableOpacity style={styles.button} onPress={handleOpen}>
         <Text style={styles.buttonText}>{formatted}</Text>
       </TouchableOpacity>
       {showNative && (
         <RNDateTimePicker
           value={value}
           mode="date"
-          display={Platform.OS === 'ios' ? 'inline' : 'default'}
+          display="spinner"
           onChange={(_: any, date?: Date) => {
-            setShowNative(Platform.OS === 'ios'); // iOS keeps picker open
+            handleClose();
             if (date) onChange(date);
           }}
         />

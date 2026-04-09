@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "wg-app-temp",
-    "slug": "wg-app-temp",
+    "slug": "wg-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -34,6 +34,12 @@
           "iosDisplayInForeground": true
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "77918e2d-b4f8-4f4a-afa9-119a4633e3ed"
+      }
+    },
+    "owner": "metrowizard"
   }
 }

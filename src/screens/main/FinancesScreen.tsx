@@ -974,15 +974,15 @@ export default function FinancesScreen() {
                       </Text>
                     </TouchableOpacity>
                     <View style={styles.recurringActions}>
-                      <TouchableOpacity onPress={() => startEditRecurring(rec)}>
+                      <TouchableOpacity style={styles.recurringActionButton} onPress={() => startEditRecurring(rec)}>
                         <Text style={styles.recurringActionText}>Edit</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity onPress={() => handleToggleRecurring(rec)}>
+                      <TouchableOpacity style={styles.recurringActionButton} onPress={() => handleToggleRecurring(rec)}>
                         <Text style={styles.recurringActionText}>
                           {rec.active ? 'Pause' : 'Resume'}
                         </Text>
                       </TouchableOpacity>
-                      <TouchableOpacity onPress={() => handleDeleteRecurring(rec)}>
+                      <TouchableOpacity style={styles.recurringDeleteButton} onPress={() => handleDeleteRecurring(rec)}>
                         <Text style={styles.recurringDeleteText}>Delete</Text>
                       </TouchableOpacity>
                     </View>
@@ -1009,7 +1009,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     padding: 24,
-    paddingTop: Platform.OS === 'web' ? 60 : 100,
+    paddingTop: Platform.OS === 'web' ? 60 : 80,
   },
   header: {
     flexDirection: 'row',
@@ -1322,18 +1322,30 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   recurringActions: {
-    gap: 10,
+    gap: 8,
     alignItems: 'flex-end',
   },
+  recurringActionButton: {
+    backgroundColor: '#4f46e5',
+    borderRadius: 6,
+    paddingVertical: 9,
+    paddingHorizontal: 14,
+  },
   recurringActionText: {
-    fontSize: 14,
-    color: '#4f46e5',
-    fontWeight: '500',
+    fontSize: 13,
+    color: '#fff',
+    fontWeight: '600',
+  },
+  recurringDeleteButton: {
+    backgroundColor: '#ef4444',
+    borderRadius: 6,
+    paddingVertical: 9,
+    paddingHorizontal: 14,
   },
   recurringDeleteText: {
-    fontSize: 14,
-    color: '#ef4444',
-    fontWeight: '500',
+    fontSize: 13,
+    color: '#fff',
+    fontWeight: '600',
   },
   editRecurringCard: {
     backgroundColor: '#f9f9f9',

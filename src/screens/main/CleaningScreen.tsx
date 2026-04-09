@@ -62,6 +62,7 @@ export default function CleaningScreen() {
     return d;
   });
   const [loading, setLoading] = useState(false);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
 
   const { weekStart, weekEnd } = useMemo(() => getWeekBounds(), []);
 
@@ -270,7 +271,8 @@ export default function CleaningScreen() {
     setFormName('');
     setFormFrequency('7');
     setFormFirstDue(new Date(Date.now() + 86400000));
-    setShowTaskForm(true);
+    setShowManage(false);
+    setTimeout(() => setShowTaskForm(true), 350);
   }
 
   function openEditForm(task: CleaningTask) {
@@ -280,12 +282,15 @@ export default function CleaningScreen() {
     const due = new Date(task.last_rotated_at);
     due.setDate(due.getDate() + task.frequency_days);
     setFormFirstDue(due);
-    setShowTaskForm(true);
+    setShowManage(false);
+    setTimeout(() => setShowTaskForm(true), 350);
   }
 
   function closeTaskForm() {
     setShowTaskForm(false);
     setEditingTaskId(null);
+    setDatePickerOpen(false);
+    setTimeout(() => setShowManage(true), 350);
   }
 
   async function handleFormSave() {
@@ -605,6 +610,7 @@ export default function CleaningScreen() {
                 value={formName}
                 onChangeText={setFormName}
                 placeholderTextColor="#bbb"
+                onFocus={() => setDatePickerOpen(false)}
               />
             </View>
 
@@ -617,6 +623,7 @@ export default function CleaningScreen() {
                 onChangeText={setFormFrequency}
                 keyboardType="number-pad"
                 placeholderTextColor="#bbb"
+                onFocus={() => setDatePickerOpen(false)}
               />
             </View>
 
@@ -624,6 +631,8 @@ export default function CleaningScreen() {
               label="First due on"
               value={formFirstDue}
               onChange={setFormFirstDue}
+              isOpen={datePickerOpen}
+              onOpen={() => setDatePickerOpen(true)}
             />
 
             {editingTaskId && (
@@ -802,7 +811,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     padding: 24,
-    paddingTop: Platform.OS === 'web' ? 60 : 100,
+    paddingTop: Platform.OS === 'web' ? 60 : 80,
   },
   header: {
     flexDirection: 'row',
